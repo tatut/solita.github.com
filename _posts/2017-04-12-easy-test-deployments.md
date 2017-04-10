@@ -190,3 +190,9 @@ and start nginx and our application service from a downloaded .jar file.
 
 The above script is included in the Python lambda script and the `$BRANCH` is replaced with the
 actual branch name parameter.
+
+## The final result
+
+The final result in all its simplicity:
+
+![slack-deploy](/img/slack-deploy.gif)
