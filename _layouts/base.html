@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <base href="http://tatut.github.io/solita.github.com/">
     <meta charset="utf-8">
     <title>{{ page.title }}{% if page.title %} - {% endif %}{{ site.title }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +10,7 @@
 
     {% include og.html %}
 
-    <link href="/css/main.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
     <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="/rss.xml" />
     <script type="text/javascript">
       var _gaq = _gaq || [];
@@ -59,9 +60,13 @@
     <div class="wrapper site-footer-wrapper">
       <footer class="site-footer">
 
-        <a class="site-logo" href="http://www.solita.fi">
-          <img class="site-logo-img" src="/img/solita-logo.png" alt="Solita" />
-        </a>
+        <p>
+          <a href="http://www.solita.fi">
+            <img class="logo" src="img/solita-logo.png" alt="Solita" />
+          </a>
+          Copyright &copy; <a href="http://www.solita.fi">Solita Oy</a></a>
+        </p>
+
 
         <div class="site-footer-links">
           <a class="decorated" href="http://www.solita.fi/">Solita.fi</a><a class="decorated" href="https://twitter.com/SolitaOy?__hstc=256420948.62ee05c43f7f28b4546e97a969f37bd8.1444921521532.1455107308943.1455535189712.18&amp;__hssc=256420948.4.1455535189712&amp;__hsfp=2012607753">Twitter</a><a class="decorated" href="http://www.linkedin.com/company/solita-oy/?__hstc=256420948.62ee05c43f7f28b4546e97a969f37bd8.1444921521532.1455107308943.1455535189712.18&amp;__hssc=256420948.3.1455535189712&amp;__hsfp=2012607753">LinkedIn</a><a class="decorated" href="http://www.facebook.com/Solita?__hstc=256420948.62ee05c43f7f28b4546e97a969f37bd8.1444921521532.1455107308943.1455535189712.18&amp;__hssc=256420948.4.1455535189712&amp;__hsfp=2012607753">Facebook</a><a class="decorated" href="http://www.youtube.com/user/SolitaOy?__hstc=256420948.62ee05c43f7f28b4546e97a969f37bd8.1444921521532.1455107308943.1455535189712.18&amp;__hssc=256420948.4.1455535189712&amp;__hsfp=2012607753">YouTube</a><a class="decorated" href="https://www.instagram.com/solitaoy/">Instagram</a>
@@ -71,13 +76,20 @@
 
     <div id="templates" style="display: none;">
       <a href="#" class="avatar">
-        <img class="img" src="/img/pauli_image.png" alt="" />
+        <img class="img" src="img/pauli_image.png" alt="" />
       </a>
     </div>
 
-    <script type="text/javascript" src="/js/jquery-1.8.2.min.js"></script>
-    <script type="text/javascript" src="/js/transparency.min.js"></script>
-    <script type="text/javascript" src="/js/webtoolkit.md5.js"></script>
-    <script type="text/javascript" src="/js/main.js"></script>
+    <script type="text/javascript" src="js/jquery-1.8.2.min.js"></script>
+    <script type="text/javascript" src="js/transparency.min.js"></script>
+    <script type="text/javascript" src="js/tagcloud.js"></script>
+    <script type="text/javascript" src="js/webtoolkit.md5.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+
+    <script>
+      var tags = document.querySelectorAll('.tag');
+      new TagCloud(tags, 120, 80, '%', 207, 85, 43);
+    </script>
+
   </body>
 </html>

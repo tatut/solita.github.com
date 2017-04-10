@@ -7,7 +7,7 @@ layout: default
 <ul class="posts">
 {% for post in paginator.posts %}
     <li class="post">
-        <h2 class="post-title"><a href="{{ post.url }}">{{post.title}}</a></h2>
+        <h2 class="post-title"><a href="http://tatut.github.io/solita.github.com{{ post.url }}">{{post.title}}</a></h2>
 
         {% assign author = site.authors[post.author] %}
         <p class="post-meta">
@@ -16,7 +16,8 @@ layout: default
 
         <p class="post-excerpt">{{ post.excerpt }}</p>
 
-        <p><a href="{{ post.url }}" class="decorated">Read more &raquo;</a></p>
+        <p><a href="http://tatut.github.io/solita.github.com{{ post.url }}" class="more-link">Continue reading&hellip;</a></p>
+
     </li>
 {% endfor %}
 
