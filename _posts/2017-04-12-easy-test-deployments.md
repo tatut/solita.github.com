@@ -283,6 +283,9 @@ def lambda_handler(event, context):
 Conveniently AWS CloudWatch supports cron-like expressions for scheduled events so we
 triggered it to run every night at 19:00.
 
-The final result in all its simplicity:
+We now can easily start up new test environments and don't need to worry about terminating
+them. The whole system has a lot of moving parts but all the complexity is hidden
+behind the simple chat interface.
+The final result in all its simplicity looks like this:
 
 ![slack-deploy](/img/slack-deploy.gif)
