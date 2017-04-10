@@ -100,7 +100,12 @@ def check_branch(branch):
 def deploy(branch):
     script = initscript.replace('$BRANCH',branch)
     ec2 = boto3.client('ec2',region_name='eu-central-1')
-    res = ec2.run_instances(ImageId='ami-3ce73453', InstanceType='t2.medium', UserData=script, KeyName='harja_upcloud_rsa',MinCount=1,MaxCount=1)
+    res = ec2.run_instances(ImageId='...ami-id...',
+                            InstanceType='t2.medium',
+                            UserData=script,
+                            KeyName='...keypair...',
+                            MinCount=1,
+                            MaxCount=1)
     id = res['Instances'][0]['InstanceId']
     host = None
     while host is None:
@@ -141,3 +146,47 @@ def lambda_handler(event, context):
     except Exception, e:
         print 'error sending Slack response: ' + str(e)
 ```
+
+The above script does quite a lot. It takes an event that has two fields: branch and
+response_url. The branch is the name of the git branch to deploy and response_url is
+the Slack webhook URL to send a message to when the build is ready.
+
+First the branch is checked by doing a HEAD request for the build artifact. If it doesn't exist,
+bail out and notify the user that the build cannot be found.
+
+If the build is ok, start a new EC2 instance for it from our previously created AMI and pass it a
+user data cloud init script. More on cloud init later.
+After the machine has been started we repeatedly call describe until the machine has a public
+network name and return it.
+
+Finally, we wait for the machine to be actually up and running the software before
+notifying the user with a URL to the new machine. Running status is determined simply
+by doing an HTTP GET request to it (with fake SSL, because we don't use real certificates
+for the ephemeral test machines).
+
+## Cloud init
+
+[Cloud init](https://cloud-init.io/) is a simple way to customize servers that have been cloned from
+a template. With EC2 Centos images, we can provide a cloud init script with the instance user data.
+
+Cloud init is a YAML configuration file which can do lots of different customization tasks on the
+starting instance. In our case, we only need to run some shell commands:
+
+```yaml
+#cloud-config
+runcmd:
+  - echo "Start PostgreSQL 9.5";
+  - sudo service postgresql-9.5 start;
+  - sudo -u postgres psql -c 'create database harja;';
+  - sudo wget https://...s3 bucket url.../harja-travis-$BRANCH.pgdump.gz;
+  - sudo wget https://...s3 bucket url.../harja-travis-$BRANCH.jar;
+  - sudo zcat harja-travis-$BRANCH.pgdump.gz | sudo -u postgres psql harja;
+  - sudo service nginx start
+  - /home/centos/harja.sh $BRANCH
+```
+
+We start up PostgreSQL, create the database and restore it from the downloaded dump
+and start nginx and our application service from a downloaded .jar file.
+
+The above script is included in the Python lambda script and the `$BRANCH` is replaced with the
+actual branch name parameter.
