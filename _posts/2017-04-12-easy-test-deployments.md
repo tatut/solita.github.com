@@ -191,7 +191,93 @@ and start nginx and our application service from a downloaded .jar file.
 The above script is included in the Python lambda script and the `$BRANCH` is replaced with the
 actual branch name parameter.
 
-## The final result
+## Adding the chat interface
+
+We use [Slack](https://slack.com/) as our company wide chat and all our tools report to our project
+channel. We already have GitHub and CI notifications and error logging going to Slack so it makes
+sense to also have our test builds triggered from there.
+
+Slack makes it easy to create your own applications and uses webhooks for integrating with external
+services. So we made our custom slack app and added a slash command "/harjadeploy" which calls an
+AWS Lambda service.
+
+Unfortunately, this stage was somewhat trickier as Slack webhook POST calls use HTML form
+encoding to deliver values and AWS API gateway only accepts JSON input.
+Slack slash commands also have only three seconds to respond before they time out and
+deployments take much longer than that so we can't use the previous deployment Lambda
+directly.
+
+The first problem was solved by a quick search. Other people have had the same problem and we found
+a [gist on GitHub](https://gist.githubusercontent.com/ryanray/668022ad2432e38493df/raw/a3b8c765791ac6cfc15811a5dcb2d97056adc107/aws-api-gateway-form-to-json.ftl)
+to convert FORM encoded data to JSON.
+
+The second problem required adding another Lambda function which responds to the Slack
+slash command. That Lambda then asynchronously calls our deployment Lambda passing it
+the branch and the response URL. This provided a good way to separate the Slack webhook
+processing from the actual deployment.
+
+```python
+# coding=utf-8
+import os
+import boto3
+
+def deploy(branch, response_url):
+    lam = boto3.client('lambda',region_name='eu-central-1')
+    lam.invoke(FunctionName='deployasync',
+               InvocationType='Event',
+               Payload=b'{"branch": "'+branch+'", "response_url": "'+response_url+'"}')
+
+def lambda_handler(event, context):
+    token = os.environ['slacktoken']
+    user = event['user_name']
+    allowed = os.environ['allowed_users'].split(',')
+    if not user in allowed:
+        return {'text': 'You are not on the allowed user list.'}
+    else:
+        try:
+          if event['token'] == token:
+            deploy(event['text'], event['response_url'])
+            return {'text': 'Starting branch: ' + event['text'] + '. Please wait.'}
+        except Exception, e:
+            return "error: " + str(e)
+```
+
+This Lambda function is much simpler. It simply checks that the webhook call is coming from Slack
+by comparing an environment variable to an event field. Then we check that the Slack
+user name is on a list of allowed users.
+
+If the invocation is valid, fire up an asynchronous invocation of the previously defined
+deployment Lambda and return a message to the user.
+
+
+## Finishing touches and the final result
+
+Now that we have a way to easily start new application instances from the comfort
+of our chat room, we have one final thing to consider: termination.
+We are starting up new servers easily but we have no way of terminating them. We certainly
+don't want to do that by hand and we can't leave them running forever and costing us
+money.
+
+We decided on a very simple solution that fits our working patterns quite well: a cron job.
+We set up a third Lambda function that is run every evening a few hours after business
+hours and its only job is to terminate all running EC2 instances.
+We don't have anything besides our test environments in this AWS account so we can
+safely indiscriminately terminate all running instances.
+
+```python
+def lambda_handler(event, context):
+    ec2 = boto3.client('ec2', region_name='eu-central-1')
+    instances = ec2.describe_instances()
+    ids = []
+    for r in instances['Reservations']:
+        for i in r['Instances']:
+            ids.append(i['InstanceId'])
+    ec2.terminate_instances(InstanceIds=ids)
+    return 'Terminated instances: ' + str(ids)
+```
+
+Conveniently AWS CloudWatch supports cron-like expressions for scheduled events so we
+triggered it to run every night at 19:00.
 
 The final result in all its simplicity:
 
